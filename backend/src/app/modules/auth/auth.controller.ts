@@ -176,7 +176,6 @@ class authController {
   static resetTokens: RequestHandler = asyncHandler(
     async (req: Request, res: Response) => {
       const { refreshToken } = req.cookies;
-      console.log(refreshToken);
       
       if (!refreshToken)
         throw ApiError.unAuthorized("Refresh token missing in cookies");
