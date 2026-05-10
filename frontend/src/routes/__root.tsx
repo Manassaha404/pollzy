@@ -1,0 +1,40 @@
+import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
+import { Navbar } from '../components/Navbar.tsx'
+import appCss from '../styles.css?url'
+import { useRefreshToken } from '#/hooks/useRefreshToken.ts'
+import PageLoader from '#/components/PageLoader.tsx'
+
+export const Route = createRootRoute({
+  head: () => ({
+    meta: [
+      { charSet: 'utf-8' },
+      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+      { title: 'Pollzy' },
+    ],
+    links: [{ rel: 'stylesheet', href: appCss }],
+  }),
+  shellComponent: RootDocument,
+})
+
+function RootDocument({ children }: { children: React.ReactNode }) {
+  const loading = useRefreshToken()
+
+  return (
+    <html lang="en">
+      <head>
+        <HeadContent />
+      </head>
+      <body className="bg-black text-white antialiased">
+        {loading ? (
+          <PageLoader />
+        ) : (
+          <>
+            <Navbar />
+            {children}
+          </>
+        )}
+        <Scripts />
+      </body>
+    </html>
+  )
+}

@@ -176,6 +176,8 @@ class authController {
   static resetTokens: RequestHandler = asyncHandler(
     async (req: Request, res: Response) => {
       const { refreshToken } = req.cookies;
+      console.log(refreshToken);
+      
       if (!refreshToken)
         throw ApiError.unAuthorized("Refresh token missing in cookies");
 
@@ -226,6 +228,7 @@ class authController {
         "Tokens refreshed successfully",
         {
           accessToken,
+          info: { ...existingUser }
         },
       );
     },
@@ -246,12 +249,16 @@ class authController {
         .from(auths)
         .where(eq(auths.userId, existingUser.id));
       if (!userAuth) throw ApiError.internal("Auth record missing");
-
+      const cookieOptions = {
+        httpOnly: true,
+        sameSite: "strict" as const,
+        secure: process.env.NODE_ENV === "production",
+      };
       await db
         .update(auths)
         .set({ refreshToken: null })
         .where(eq(auths.id, userAuth.id));
-      ApiResponse(res, 200, "Logged out successfully");
+      ApiResponse(res.clearCookie("refreshToken", cookieOptions), 200, "Logged out successfully");
     },
   );
 }
