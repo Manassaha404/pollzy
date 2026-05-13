@@ -11,7 +11,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { UserRegisterSchema } from '../types/userLogin'
 import type { UserRegisterType } from '../types/userLogin'
 import Logo from '#/components/HorizontalLogo.tsx'
-import colors from '#/constants/color'
+import colors from '#/constants/COLORS'
 import api from '#/api/axios'
 import { useNavigate } from '@tanstack/react-router'
 
@@ -35,7 +35,7 @@ export default function RegisterPage() {
         email,
         password,
       })
-      navigate({ to: '/login' })
+      navigate({ to: '/login', replace: true })
     } catch (error: any) {
       setError('root', {
         message: error.response?.data?.message || 'Registration failed',

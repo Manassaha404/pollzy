@@ -5,13 +5,14 @@ import cookieParser from "cookie-parser";
 import authRouter from "./modules/auth/auth.routes.js";
 import { errorHandler } from "./common/middlewares/errorHandler.js";
 import { ApiError } from "./common/utils/apiError.js";
+import pollRouter from "./modules/poll/poll.routes.js";
 
 export function createExpressServer(): Express {
   const app = express();
 
   
   app.use(cors({
-  origin: 'http://localhost:3001',
+  origin: 'http://localhost:3000',
   credentials: true,               
 }))
   app.use(cookieParser());
@@ -20,6 +21,7 @@ export function createExpressServer(): Express {
 
   
   app.use("/api/v1/user", authRouter);
+  app.use("/api/v1/poll", pollRouter);
 
   // Health check
   app.get("/health", (_req, res) => {

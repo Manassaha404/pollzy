@@ -14,7 +14,7 @@ import { Separator } from '@/components/ui/separator'
 import { ArrowRight } from 'lucide-react'
 
 import Logo from '#/components/HorizontalLogo.tsx'
-import colors from '#/constants/color'
+import colors from '#/constants/COLORS.js'
 import api from '#/api/axios'
 
 export default function LoginPage() {
@@ -45,7 +45,7 @@ export default function LoginPage() {
         fullname,
         accessToken,
       })
-      navigate({ to: '/' })
+      navigate({ to: '/' , replace: true})
     } catch (error) {
       console.log(error)
 

@@ -6,8 +6,9 @@ import { users } from "../../../db/schema/users.schema.js";
 import { eq } from "drizzle-orm";
 import { auths } from "../../../db/schema/auth.schema.js";
 import asyncHandler from "../../common/middlewares/asyncHandler.js";
+import ApiResponse from "../../common/utils/apiResponce.js";
 
-function extractBearerToken(req: Request): string {
+export function extractBearerToken(req: Request): string {
   const authHeader =
     req.get("authorization") ||
     (req.headers["x-access-token"] as string | undefined);
@@ -20,7 +21,19 @@ function extractBearerToken(req: Request): string {
   return token;
 }
 
-// Any authenticated user
+
+export function extractOptionalBearerToken(
+  req: Request,
+): string | null {
+  const authHeader =
+    req.get("authorization") ||
+    (req.headers["authorization"] as string | undefined);
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return null;
+  }
+  return authHeader.split(" ")[1] || null;
+}
+
 export const authorization: RequestHandler = asyncHandler(
   async (req, _res, next) => {
     const token = extractBearerToken(req);
@@ -36,25 +49,42 @@ export const authorization: RequestHandler = asyncHandler(
     next();
   },
 );
-//role based
-export const roleBasedAuthrization = (...roles: string[]): RequestHandler =>
-  asyncHandler(async (req, res, next) => {
-    const { userId } = (req as any).userId;
-    const [user] = await db.select().from(users).where(eq(users.id, userId));
-    if (!user) throw ApiError.unAuthorized("User not found");
-    const [userAuth] = await db
-      .select()
-      .from(auths)
-      .where(eq(auths.userId, user.id));
-    if (!userAuth) {
-      throw ApiError.unAuthorized(
-        "Account is not verified. Please verify your email.",
-      );
-    }
-    if (!roles.includes(userAuth.role as string)) {
-      throw ApiError.forbidden(
-        "You do not have permission to access this resource.",
-      );
+
+export const isGuestTokenExisted: RequestHandler = asyncHandler(
+  async (req: Request, res: Response, next:NextFunction) => {
+    const {guestToken} = req.cookies;
+    if(guestToken){
+      return ApiResponse(res, 200, "guestToken already there")
     }
     next();
-  });
+  },
+);
+
+export const optionalAuthorization: RequestHandler = asyncHandler(
+  async (req, _res, next) => {
+    try {
+      const token = extractOptionalBearerToken(req);
+      
+      if (!token) {
+        (req as any).userId = null;
+        return next();
+      }
+      const payload = verifyAccessToken(token);
+      
+      
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, payload.userId));
+      if (!user) {
+        (req as any).userId = null;
+        return next();
+      }
+      (req as any).userId = payload.userId;
+      next();
+    } catch {
+      (req as any).userId = null;
+      next();
+    }
+  },
+);

@@ -12,9 +12,7 @@ import {
   generateRefreshToken,
   verifyRefreshToken,
 } from "../../common/utils/jwtService.js";
-import {
-  sendOtp,
-} from "../../common/utils/emailVerification.js";
+import { sendOtp } from "../../common/utils/emailVerification.js";
 import asyncHandler from "../../common/middlewares/asyncHandler.js";
 
 class authController {
@@ -176,7 +174,7 @@ class authController {
   static resetTokens: RequestHandler = asyncHandler(
     async (req: Request, res: Response) => {
       const { refreshToken } = req.cookies;
-      
+
       if (!refreshToken)
         throw ApiError.unAuthorized("Refresh token missing in cookies");
 
@@ -227,7 +225,7 @@ class authController {
         "Tokens refreshed successfully",
         {
           accessToken,
-          info: { ...existingUser }
+          info: { ...existingUser },
         },
       );
     },
@@ -257,7 +255,27 @@ class authController {
         .update(auths)
         .set({ refreshToken: null })
         .where(eq(auths.id, userAuth.id));
-      ApiResponse(res.clearCookie("refreshToken", cookieOptions), 200, "Logged out successfully");
+      ApiResponse(
+        res.clearCookie("refreshToken", cookieOptions),
+        200,
+        "Logged out successfully",
+      );
+    },
+  );
+
+  static guestToken: RequestHandler = asyncHandler(
+    async (req: Request, res: Response) => {
+      const guestToken = crypto.randomUUID();
+      const cookieOptions = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict" as const,
+      };
+      return ApiResponse(
+        res.cookie("guestToken", guestToken, cookieOptions),
+        200,
+        "guestToken send successFully",
+      );
     },
   );
 }

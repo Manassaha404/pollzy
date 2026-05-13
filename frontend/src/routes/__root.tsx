@@ -3,7 +3,7 @@ import { Navbar } from '../components/Navbar.tsx'
 import appCss from '../styles.css?url'
 import { useRefreshToken } from '#/hooks/useRefreshToken.ts'
 import PageLoader from '#/components/PageLoader.tsx'
-
+import { useGuestToken } from '../hooks/useGuestToken.ts'
 export const Route = createRootRoute({
   head: () => ({
     meta: [
@@ -17,15 +17,15 @@ export const Route = createRootRoute({
 })
 
 function RootDocument({ children }: { children: React.ReactNode }) {
-  const loading = useRefreshToken()
-
+  let loading = useRefreshToken()
+  let guestTokenloading = useGuestToken()
   return (
     <html lang="en">
       <head>
         <HeadContent />
       </head>
       <body className="bg-black text-white antialiased">
-        {loading ? (
+        {loading && guestTokenloading ? (
           <PageLoader />
         ) : (
           <>

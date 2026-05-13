@@ -3,7 +3,7 @@ import ColorBends from '#/components/ui/ColorBends'
 import { Button } from '@/components/ui/button'
 import { Plus, ArrowRight } from 'lucide-react'
 import { useNavigate } from '@tanstack/react-router'
-import colors from '#/constants/color'
+import colors from '#/constants/COLORS'
 import MagicBento from '@/components/ui/MagicBento'
 import Footer from '#/components/Footer'
 
@@ -31,10 +31,8 @@ export default function HomePage() {
         />
       </div>
 
-      
       <div className="relative z-10 bg-transparent  pointer-events-none">
         <section className="pointer-events-auto flex flex-col items-center text-center px-6 pt-20 pb-16 max-w-3xl mx-auto">
-
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight leading-tight mb-6">
             Create polls that{' '}
             <span style={{ color: colors.sage }}>actually</span> get answered
