@@ -17,15 +17,19 @@ export const Route = createRootRoute({
 })
 
 function RootDocument({ children }: { children: React.ReactNode }) {
-  let loading = useRefreshToken()
-  let guestTokenloading = useGuestToken()
+  const refreshLoading = useRefreshToken()
+  const guestLoading = useGuestToken()
+
+  const loading = refreshLoading || guestLoading
+
   return (
     <html lang="en">
       <head>
         <HeadContent />
       </head>
+
       <body className="bg-black text-white antialiased">
-        {loading && guestTokenloading ? (
+        {loading ? (
           <PageLoader />
         ) : (
           <>
@@ -33,6 +37,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             {children}
           </>
         )}
+
         <Scripts />
       </body>
     </html>

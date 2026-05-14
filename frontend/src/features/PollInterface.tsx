@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams, useRouter } from '@tanstack/react-router'
 import api from '#/api/axios'
 import { useUserInfoStore } from '#/store/userInfoStore'
-
+import socket from '#/socket/socket.io'
 import { Bookmark, BookmarkCheck, Globe, Lock } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
@@ -69,13 +69,16 @@ export default function PollInterface() {
 
     async function getPollData() {
       try {
+        socket.connect();
+        socket.emit(`join_poll`, pollId)
+        socket.emit('new_view', pollId)
         const [pollRes, votedRes, savedRes] = await Promise.all([
           api.get(`/poll/interface/${pollId}`),
           api.get(`/poll/is-already-voted/${pollId}`),
           api.get(`/poll/isSaved/${pollId}`),
           api.post(`/poll/viwe-poll/${pollId}`),
         ])
-
+        
         if (ignore) return
 
         setPoll(pollRes.data.data)
@@ -83,6 +86,7 @@ export default function PollInterface() {
         setAlreadyVoted(votedRes.data.data.alreadyVoted)
 
         setIsSaved(savedRes.data.data.isSaved)
+        
       } catch (error) {
         console.error(error)
       }
@@ -91,6 +95,8 @@ export default function PollInterface() {
     getPollData()
 
     return () => {
+      socket.emit(`leave_poll`, pollId);
+      socket.disconnect();
       ignore = true
     }
   }, [pollId])
@@ -151,7 +157,8 @@ export default function PollInterface() {
         questionId,
         optionId: answers[questionId],
       }))
-
+      socket.emit('submit_vote', {pollId, pollData: requestData});
+      
       await api.post(`/poll/submit-vote/${pollId}`, {
         answers: requestData,
       })

@@ -1,4 +1,4 @@
-import { Globe, Lock, Pencil, Trash2, Send, Eye } from 'lucide-react'
+import { Globe, Lock, Trash2, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import colors from '../../constants/COLORS.js'
@@ -7,10 +7,8 @@ interface PollHeaderProps {
   title: string
   description?: string | null
   isPublic: boolean
-  onEdit: () => void
   onDelete: () => void
   onPublish: () => void
-  onPreview: () => void
   isPublishing?: boolean
 }
 
@@ -18,10 +16,8 @@ export function PollHeader({
   title,
   description,
   isPublic,
-  onEdit,
   onDelete,
   onPublish,
-  onPreview,
   isPublishing,
 }: PollHeaderProps) {
   return (
@@ -71,35 +67,6 @@ export function PollHeader({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={onPreview}
-            className="h-9 px-3 rounded-xl text-xs font-medium border transition-colors"
-            style={{
-              color: 'rgba(255,255,255,0.4)',
-              borderColor: 'rgba(255,255,255,0.08)',
-              backgroundColor: 'transparent',
-            }}
-          >
-            <Eye className="w-3.5 h-3.5 mr-1.5" /> Preview
-          </Button>
-
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={onEdit}
-            className="h-9 px-3 rounded-xl text-xs font-medium border transition-colors"
-            style={{
-              color: colors.steel,
-              borderColor: `${colors.steel}30`,
-              backgroundColor: `${colors.steel}0D`,
-            }}
-          >
-            <Pencil className="w-3.5 h-3.5 mr-1.5" /> Edit
-          </Button>
 
           <Button
             type="button"

@@ -207,12 +207,12 @@ class pollController {
     async (req: Request, res: Response) => {
       try {
         const { pollId } = req.params;
-
         if (!pollId) {
           throw ApiError.badRequest("pollId is missing");
         }
         const { userId } = (req as any).userId;
         if (!userId) throw new Error("User ID not found in request");
+
         const [poll] = await db
           .select()
           .from(polls)
@@ -220,38 +220,31 @@ class pollController {
         if (!poll) {
           throw ApiError.notFound("poll not found");
         }
-        if (poll.creatorId !== userId) {
-          throw ApiError.forbidden("you don't access to this poll");
-        }
+
         const questionWiseVoteData = await db
           .select()
           .from(questions)
           .innerJoin(options, eq(options.questionId, questions.id))
           .leftJoin(votes, eq(votes.optionId, options.id))
           .where(eq(questions.pollId, poll.id));
-
         const totalViwes = await db
           .select({ count: count() })
           .from(viwes)
           .where(eq(viwes.pollId, poll.id));
-
         const totalQuestions = await db
           .select()
           .from(questions)
           .where(eq(questions.pollId, pollId as string));
-
         const questionWiseOptionsMap = new Map<
           string,
           dashboardquestiondataType
         >();
         const optionWiseVoteCountMap = new Map<string, number>();
-
         for (const vote of questionWiseVoteData) {
           const { questions, options } = vote;
           const voteId = vote.votes?.id;
           const questionId = questions.id;
           const optionId = options.id;
-
           if (!questionWiseOptionsMap.has(questionId)) {
             questionWiseOptionsMap.set(questionId, {
               id: questionId,
@@ -260,27 +253,25 @@ class pollController {
               options: [],
             });
           }
-
           const question = questionWiseOptionsMap.get(questionId)!;
-
           const optionExists = question.options.some((o) => o.id === optionId);
-
           if (!optionExists) {
-            question.options.push({
-              id: optionId,
-              text: options.text,
-            });
+            question.options.push({ id: optionId, text: options.text });
           }
           optionWiseVoteCountMap.set(
             optionId,
             (optionWiseVoteCountMap.get(optionId) || 0) + (voteId ? 1 : 0),
           );
         }
-        let totalVotes = 0;
+        const totalVotes = await db
+          .selectDistinct({ userId: votes.userId })
+          .from(votes)
+          .innerJoin(options, eq(options.id, votes.optionId))
+          .innerJoin(questions, eq(questions.id, options.questionId))
+          .where(eq(questions.pollId, poll.id));
         const questionData = [...questionWiseOptionsMap.values()].map((q) => ({
           ...q,
           options: q.options.map((op) => {
-            totalVotes += optionWiseVoteCountMap.get(op.id) || 0;
             return {
               id: op.id,
               text: op.text,
@@ -291,7 +282,7 @@ class pollController {
         const polldata = {
           ...poll,
           totalViews: totalViwes[0]?.count || 0,
-          totalVotes,
+          totalVotes: totalVotes.length,
           totalQuestions: totalQuestions.length,
           totalOptions: optionWiseVoteCountMap.size,
         };
@@ -345,7 +336,7 @@ class pollController {
               resultVisibility: eachRow.polls.resultVisibility,
               questions: [],
               isClosed: eachRow.polls.closedAt
-                ? eachRow.polls.closedAt > new Date()
+                ? eachRow.polls.closedAt < new Date()
                 : false,
               closedAt: eachRow.polls.closedAt
                 ? eachRow.polls.closedAt.toISOString()
@@ -554,11 +545,11 @@ class pollController {
     async (req: Request, res: Response) => {
       try {
         const userId = (req as any).userId;
-        
-        if(!userId){
+
+        if (!userId) {
           return ApiResponse(res, 200, "user is unauthorized", {
-            isSaved: false
-          })
+            isSaved: false,
+          });
         }
         const { pollId } = req.params;
 
@@ -570,10 +561,11 @@ class pollController {
           .from(saves)
           .where(
             and(eq(saves.userId, userId), eq(saves.pollId, pollId as string)),
-          ).limit(1);
-        
+          )
+          .limit(1);
+
         return ApiResponse(res, 200, "poll saved data fetch successfully", {
-          isSaved: alreadySaved.length > 0
+          isSaved: alreadySaved.length > 0,
         });
       } catch (error) {
         throw ApiError.internal("problem to save the poll");

@@ -38,7 +38,6 @@ export const authorization: RequestHandler = asyncHandler(
   async (req, _res, next) => {
     const token = extractBearerToken(req);
     const payload = verifyAccessToken(token);
-
     const [user] = await db
       .select()
       .from(users)

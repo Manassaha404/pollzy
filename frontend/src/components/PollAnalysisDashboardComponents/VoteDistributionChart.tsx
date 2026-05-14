@@ -1,19 +1,8 @@
 import colors from '../../constants/COLORS'
 
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
-import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts'
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 
 import { BarChart3 } from 'lucide-react'
 
@@ -32,33 +21,18 @@ interface Props {
   questions: Question[]
 }
 
-const PIE_COLORS = [
-  colors.sage,
-  colors.steel,
-  colors.lavender,
-  '#A7F3D0',
-  '#C4B5FD',
-]
+const PIE_COLORS = [colors.sage, colors.steel, colors.lavender, '#A7F3D0', '#C4B5FD']
 
-export default function VoteDistributionChart({
-  questions,
-}: Props) {
+export default function VoteDistributionChart({ questions }: Props) {
   return (
     <div className="space-y-6">
       {questions.map((question, questionIndex) => {
-        const totalVotes = question.options.reduce(
-          (acc, curr) => acc + curr.votes,
-          0,
-        )
-
+        const totalVotes = question.options.reduce((acc, curr) => acc + curr.votes, 0)
+        
+        
         const chartData = question.options.map((option) => ({
           name: option.text,
-          value:
-            totalVotes === 0
-              ? 0
-              : Math.round(
-                  (option.votes / totalVotes) * 100,
-                ),
+          value: totalVotes === 0 ? 0 : Math.round((option.votes / totalVotes) * 100),
           votes: option.votes,
         }))
 
@@ -77,7 +51,7 @@ export default function VoteDistributionChart({
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p
-                    className="text-xs uppercase tracking-wider"
+                    className="text-xs tracking-wider uppercase"
                     style={{
                       color: 'rgba(255,255,255,0.3)',
                     }}
@@ -85,16 +59,15 @@ export default function VoteDistributionChart({
                     Question {questionIndex + 1}
                   </p>
 
-                  <CardTitle className="text-white text-xl leading-relaxed mt-1">
+                  <CardTitle className="mt-1 text-xl leading-relaxed text-white">
                     {question.text}
                   </CardTitle>
                 </div>
 
                 <div
-                  className="px-3 py-1 rounded-xl text-xs font-medium shrink-0"
+                  className="shrink-0 rounded-xl px-3 py-1 text-xs font-medium"
                   style={{
-                    backgroundColor:
-                      'rgba(255,255,255,0.04)',
+                    backgroundColor: 'rgba(255,255,255,0.04)',
                     color: 'rgba(255,255,255,0.5)',
                   }}
                 >
@@ -106,65 +79,54 @@ export default function VoteDistributionChart({
             <CardContent>
               {hasNoVotes ? (
                 <div
-                  className="rounded-3xl flex flex-col items-center justify-center text-center py-20 px-6"
+                  className="flex flex-col items-center justify-center rounded-3xl px-6 py-20 text-center"
                   style={{
-                    backgroundColor:
-                      'rgba(255,255,255,0.03)',
+                    backgroundColor: 'rgba(255,255,255,0.03)',
                   }}
                 >
                   <div
-                    className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
+                    className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl"
                     style={{
-                      backgroundColor:
-                        'rgba(255,255,255,0.05)',
+                      backgroundColor: 'rgba(255,255,255,0.05)',
                     }}
                   >
                     <BarChart3
-                      className="w-8 h-8"
+                      className="h-8 w-8"
                       style={{
                         color: 'rgba(255,255,255,0.35)',
                       }}
                     />
                   </div>
 
-                  <h3 className="text-white text-lg font-medium">
-                    No votes yet
-                  </h3>
+                  <h3 className="text-lg font-medium text-white">No votes yet</h3>
 
                   <p
-                    className="text-sm mt-2 max-w-md"
+                    className="mt-2 max-w-md text-sm"
                     style={{
                       color: 'rgba(255,255,255,0.4)',
                     }}
                   >
-                    Vote distribution will appear here once
-                    people start participating in this poll.
+                    Vote distribution will appear here once people start participating in
+                    this poll.
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-[0.9fr_1.1fr] gap-6 items-center">
-                  <div className="h-[280px]">
-                    <ResponsiveContainer
-                      width="100%"
-                      height="100%"
-                    >
+                <div className="grid grid-cols-1 items-center gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+                  <div className="h-[320px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
                           data={chartData}
                           dataKey="value"
-                          outerRadius={100}
-                          innerRadius={65}
-                          paddingAngle={3}
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={90}
+                          innerRadius={60}
+                          paddingAngle={2}
+                          stroke="none"
                         >
                           {chartData.map((_, i) => (
-                            <Cell
-                              key={i}
-                              fill={
-                                PIE_COLORS[
-                                  i % PIE_COLORS.length
-                                ]
-                              }
-                            />
+                            <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                           ))}
                         </Pie>
 
@@ -179,33 +141,25 @@ export default function VoteDistributionChart({
                         key={item.name}
                         className="rounded-2xl p-4"
                         style={{
-                          backgroundColor:
-                            'rgba(255,255,255,0.03)',
+                          backgroundColor: 'rgba(255,255,255,0.03)',
                         }}
                       >
                         <div className="flex items-center justify-between gap-4">
-                          <div className="flex items-center gap-3 min-w-0">
+                          <div className="flex min-w-0 items-center gap-3">
                             <div
-                              className="w-3 h-3 rounded-full shrink-0"
+                              className="h-3 w-3 shrink-0 rounded-full"
                               style={{
-                                backgroundColor:
-                                  PIE_COLORS[
-                                    i %
-                                      PIE_COLORS.length
-                                  ],
+                                backgroundColor: PIE_COLORS[i % PIE_COLORS.length],
                               }}
                             />
 
                             <div className="min-w-0">
-                              <p className="text-sm text-white truncate">
-                                {item.name}
-                              </p>
+                              <p className="truncate text-sm text-white">{item.name}</p>
 
                               <p
-                                className="text-xs mt-1"
+                                className="mt-1 text-xs"
                                 style={{
-                                  color:
-                                    'rgba(255,255,255,0.35)',
+                                  color: 'rgba(255,255,255,0.35)',
                                 }}
                               >
                                 {item.votes} votes
@@ -213,15 +167,11 @@ export default function VoteDistributionChart({
                             </div>
                           </div>
 
-                          <div className="text-right shrink-0">
+                          <div className="shrink-0 text-right">
                             <p
                               className="text-xl font-semibold"
                               style={{
-                                color:
-                                  PIE_COLORS[
-                                    i %
-                                      PIE_COLORS.length
-                                  ],
+                                color: PIE_COLORS[i % PIE_COLORS.length],
                               }}
                             >
                               {item.value}%
@@ -230,21 +180,16 @@ export default function VoteDistributionChart({
                         </div>
 
                         <div
-                          className="mt-4 h-2 rounded-full overflow-hidden"
+                          className="mt-4 h-2 overflow-hidden rounded-full"
                           style={{
-                            backgroundColor:
-                              'rgba(255,255,255,0.05)',
+                            backgroundColor: 'rgba(255,255,255,0.05)',
                           }}
                         >
                           <div
                             className="h-full rounded-full transition-all duration-500"
                             style={{
                               width: `${item.value}%`,
-                              backgroundColor:
-                                PIE_COLORS[
-                                  i %
-                                    PIE_COLORS.length
-                                ],
+                              backgroundColor: PIE_COLORS[i % PIE_COLORS.length],
                             }}
                           />
                         </div>

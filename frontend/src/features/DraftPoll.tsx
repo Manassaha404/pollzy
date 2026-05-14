@@ -99,10 +99,8 @@ export function DraftPollPage() {
           description={poll?.description}
           isPublic={poll?.isPublic || true}
           isPublishing={isPublishing}
-          onEdit={() => console.log('edit')}
           onDelete={handelDelete}
           onPublish={handlePublish}
-          onPreview={() => console.log('preview')}
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-6 items-start">

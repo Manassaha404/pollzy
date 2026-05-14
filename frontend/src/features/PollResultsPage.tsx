@@ -2,10 +2,13 @@
 
 import { useEffect, useMemo, useState } from 'react'
 
-import PollResultsScreen from '../components/PollResultsScreen'
 import { useParams } from '@tanstack/react-router'
+
+import PollResultsScreen from '../components/PollResultsScreen'
+
 import PageLoader from '#/components/PageLoader'
 import api from '#/api/axios'
+import socket from '#/socket/socket.io'
 
 interface PollOptionResult {
   id: string
@@ -33,35 +36,130 @@ interface PollResultsResponse {
   questionData: PollQuestionResult[]
 }
 
+interface GetSubmitData {
+  questionId: string
+  optionId: string
+}
+
 export default function PollResultsPage() {
-  const { pollId } = useParams({ from: '/polls/result/$pollId' })
+  const { pollId } = useParams({
+    from: '/polls/result/$pollId',
+  })
 
   const [isLoading, setIsLoading] = useState(true)
   const [polldata, setPollData] = useState<PollData | null>(null)
   const [questionData, setQuestionData] = useState<PollQuestionResult[]>([])
 
   useEffect(() => {
+    let ignore = false
+
     async function getData() {
       try {
-        const { data } = await api.get(`/poll/dashboard/${pollId}`)
-        console.log(data.data)
+        if (!socket.connected) {
+          socket.connect()
+        }
+
+        socket.emit('join_poll', pollId)
+
+        const { data } = await api.get<{
+          data: PollResultsResponse
+        }>(`/poll/dashboard/${pollId}`)
+
+        if (ignore) return
+
         setQuestionData(data.data.questionData)
+
         setPollData({
           ...data.data.polldata,
         })
       } catch (error) {
+        console.error('Failed to fetch poll results:', error)
       } finally {
-        setIsLoading(false)
+        if (!ignore) {
+          setIsLoading(false)
+        }
       }
     }
+
     getData()
+
+    const handleVoteUpdated = ({
+      pollData,
+    }: {
+      pollData: GetSubmitData[]
+    }) => {
+      setQuestionData((prev) => {
+        return prev.map((question) => {
+          const matchedVotes = pollData.filter(
+            (vote) => vote.questionId === question.id,
+          )
+
+          if (matchedVotes.length === 0) {
+            return question
+          }
+
+          return {
+            ...question,
+            options: question.options.map((option) => {
+              const shouldIncrease = matchedVotes.some(
+                (vote) => vote.optionId === option.id,
+              )
+
+              if (!shouldIncrease) {
+                return option
+              }
+
+              return {
+                ...option,
+                votes: option.votes + 1,
+              }
+            }),
+          }
+        })
+      })
+
+      setPollData((prev) =>
+        prev
+          ? {
+              ...prev,
+              totalVotes: prev.totalVotes + 1,
+            }
+          : prev,
+      )
+    }
+
+    const handleViewUpdated = () => {
+      setPollData((prev) =>
+        prev
+          ? {
+              ...prev,
+              totalViews: prev.totalViews + 1,
+            }
+          : prev,
+      )
+    }
+
+    socket.off('vote_updated', handleVoteUpdated)
+    socket.on('vote_updated', handleVoteUpdated)
+
+    socket.off('view_updated', handleViewUpdated)
+    socket.on('view_updated', handleViewUpdated)
+
+    return () => {
+      ignore = true
+
+      socket.emit('leave_poll', pollId)
+
+      socket.off('vote_updated', handleVoteUpdated)
+      socket.off('view_updated', handleViewUpdated)
+    }
   }, [pollId])
 
   const analytics = useMemo(() => {
     const mostVotedOptionPerQuestion = questionData.map((question) => {
-      const topOption = [...question.options].sort(
-        (a, b) => b.votes - a.votes,
-      )[0]
+      const topOption = question.options.reduce((max, option) =>
+        option.votes > max.votes ? option : max,
+      )
 
       return {
         questionId: question.id,
@@ -72,7 +170,10 @@ export default function PollResultsPage() {
 
     const totalQuestionVotes = questionData.map((question) => ({
       questionId: question.id,
-      totalVotes: question.options.reduce((acc, curr) => acc + curr.votes, 0),
+      totalVotes: question.options.reduce(
+        (acc, curr) => acc + curr.votes,
+        0,
+      ),
     }))
 
     return {
@@ -81,14 +182,18 @@ export default function PollResultsPage() {
     }
   }, [questionData])
 
-  console.log('poll analytics', analytics)
 
-  if (!polldata) {
+
+  if (isLoading || !polldata) {
     return <PageLoader />
   }
+
   return (
     <div className="w-full px-4 py-6">
-      <PollResultsScreen polldata={polldata} questionData={questionData} />
+      <PollResultsScreen
+        polldata={polldata}
+        questionData={questionData}
+      />
     </div>
   )
 }

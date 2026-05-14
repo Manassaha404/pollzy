@@ -2,16 +2,27 @@ import api from "#/api/axios"
 import { useEffect, useState } from "react"
 
 export const useGuestToken = () => {
-  const [guestTokenloading, setGuestTokenloading] = useState(true)
+  const [loading, setLoading] = useState(true)
+
   useEffect(() => {
-    const refresh = async () => {
+    let mounted = true
+
+    async function createGuestToken() {
       try {
         await api.post('/user/guestToken')
       } finally {
-        setGuestTokenloading(false)
+        if (mounted) {
+          setLoading(false)
+        }
       }
     }
-    refresh()
+
+    createGuestToken()
+
+    return () => {
+      mounted = false
+    }
   }, [])
-  return guestTokenloading;
+
+  return loading
 }
