@@ -18,6 +18,7 @@ import {
 } from '#/components/PollInterfaceComponents/QuestionStep'
 
 import colors from '../constants/COLORS'
+import { useGuestToken } from '#/hooks/useGuestToken'
 
 interface PollOption {
   id: string
@@ -72,6 +73,7 @@ export default function PollInterface() {
         socket.connect();
         socket.emit(`join_poll`, pollId)
         socket.emit('new_view', pollId)
+        useGuestToken()
         const [pollRes, votedRes, savedRes] = await Promise.all([
           api.get(`/poll/interface/${pollId}`),
           api.get(`/poll/is-already-voted/${pollId}`),
