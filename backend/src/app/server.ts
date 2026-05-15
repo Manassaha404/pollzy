@@ -11,7 +11,7 @@ export function createExpressServer(): Express {
 
   
   app.use(cors({
-  origin: 'https://pollzy.manassaha425.workers.dev/',
+  origin: 'https://pollzy.manassaha425.workers.dev',
   credentials: true,               
 }))
   app.use(cookieParser());
