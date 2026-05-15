@@ -9,3 +9,7 @@ input:focus-visible {
   outline: none !important;
   box-shadow: 0 0 0 1px rgba(143, 179, 161, 0.4) !important;
 }
+
+body {
+  background-color: #000000;
+}
