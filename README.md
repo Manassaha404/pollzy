@@ -1,52 +1,54 @@
-# 📊 PollStream - Real-Time Polling & Analytics Platform
+# 📊 Pollzy - Real-Time Polling & Analytics Platform
 
-A full-stack web platform where users can create, share, and track polls in real-time. Built for speed and scalability, it features dynamic forms, live WebSocket updates, and robust data management.
+A full-stack web platform where users can create, share, and track polls in real-time[cite: 1]. Built for speed and scalability, it features dynamic forms, live WebSocket updates, and robust data management[cite: 1].
+
+**🔗 Live Demo:** [https://pollzy-pi.vercel.app/](https://pollzy-pi.vercel.app/)[cite: 1]
 
 ---
 
-## ✨ What It Does
+## ✨ Features
 
 ### 📝 Dynamic Poll Creation
-* **Single-Option Questions:** Creators can build comprehensive polls featuring multiple questions where respondents select one clear answer from the provided options.
-* **Smart Validation:** Individual questions can be explicitly marked as either **Mandatory** or **Optional**.
-* **Access Control:** Polls can be configured to accept **Anonymous** feedback or strictly require **Authenticated** users.
-* **Auto-Expiry:** Every poll is bound by an expiry timer. Once the deadline passes, the poll automatically deactivates and no further responses are accepted.
+* **Single-Option Questions:** Build comprehensive polls featuring multiple questions with clear single-choice answers[cite: 1].
+* **Smart Validation:** Questions can be set as **Mandatory** or **Optional**[cite: 1].
+* **Access Control:** Support for **Anonymous** feedback or **Authenticated** user restrictions[cite: 1].
+* **Auto-Expiry:** Automatic deactivation via an expiry timer to prevent late submissions[cite: 1].
 
-### 🗳️ Seamless Respondent Experience
-* **Public Links:** Polls are easily shareable via unique URLs. 
-* **Smooth Submissions:** Respondents can open the link, breeze through the dynamic React forms, and submit their feedback securely.
+### 🗳️ Respondent Experience
+* **Public Links:** Shareable unique URLs for easy access[cite: 1].
+* **Optimized Forms:** Secure and smooth submission process using dynamic React forms[cite: 1].
 
-### 📈 Real-Time Analytics Dashboard
-* **Live Updates:** Powered by **Socket.io**, the creator's dashboard updates instantly the moment a new response is submitted.
-* **Deep Insights:** Creators get a clear view of total responses, question-wise summaries, option counts, and overall participation metrics.
+### 📈 Real-Time Analytics
+* **Live Updates:** Dashboard updates instantly using **Socket.io** upon each submission[cite: 1].
+* **Deep Insights:** Visualize total responses, question summaries, and participation metrics[cite: 1].
 
-### 📢 Publishing Results
-* **Transparency:** Once a poll is completed, the creator has the option to publish the final results.
-* **Public Viewing:** After publishing, anyone who visits the original poll link will automatically see the final poll outcome and response summaries instead of the voting form.
+### 📢 Results Publishing
+* **Public Results:** Creators can choose to publish final outcomes[cite: 1].
+* **Seamless Transition:** Once published, the poll link automatically displays results instead of the voting form[cite: 1].
 
 ---
 
 ## 🛠️ Technology Stack
 
-* **Frontend Engine:** React
-* **Routing:** TanStack Router (Handling protected routes and public forms)
-* **Form Handling:** React Hook Form (For dynamic validation)
-* **Backend API:** Node.js & Express.js
-* **Real-Time Communication:** Socket.io / WebSockets
-* **Primary Database:** PostgreSQL (Structured schema for users, polls, questions, and responses)
-* **Caching & Performance:** Redis
-* **Architecture:** Monorepo (Frontend and Backend housed within a single repository)
+| Layer | Technology |
+| :--- | :--- |
+| **Frontend** | React, TanStack Router, React Hook Form[cite: 1] |
+| **Backend** | Node.js, Express.js[cite: 1] |
+| **Real-Time** | Socket.io / WebSockets[cite: 1] |
+| **Database** | PostgreSQL[cite: 1] |
+| **Performance** | Redis (Caching)[cite: 1] |
+| **Architecture** | Monorepo[cite: 1] |
 
 ---
 
 ## 🛡️ Hackathon Requirements Fulfilled
 
-- [x] **Question Type:** Single-option based questions supported.
-- [x] **Response Modes:** Both anonymous and authenticated modes implemented.
-- [x] **Time Limits:** Poll link expiry system actively prevents late submissions.
-- [x] **Validation:** Mandatory and optional questions strictly handled on both frontend and backend.
-- [x] **Insights:** Complete analytics dashboard built for creators.
-- [x] **Visibility:** Final poll results can be published to the same public link.
-- [x] **Live Data:** Real-time response counts and updates achieved via Socket.io.
-- [x] **Full-Stack:** Both API and UI fully implemented.
-- [x] **Version Control:** Maintained cleanly inside one single GitHub repository.
+- [x] **Question Type:** Single-option questions[cite: 1].
+- [x] **Response Modes:** Anonymous and authenticated support[cite: 1].
+- [x] **Time Limits:** Link expiry system[cite: 1].
+- [x] **Validation:** Frontend and backend handling for mandatory fields[cite: 1].
+- [x] **Insights:** Full analytics dashboard[cite: 1].
+- [x] **Visibility:** Result publishing to public links[cite: 1].
+- [x] **Live Data:** Real-time updates via Socket.io[cite: 1].
+- [x] **Full-Stack:** Complete API and UI implementation[cite: 1].
+- [x] **Version Control:** Single GitHub repository[cite: 1].
