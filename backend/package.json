@@ -2,14 +2,21 @@
   "name": "authstarter",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/index.js",
   "type": "module",
-  "scripts": {
-    "dev": "tsc-watch --onSuccess \"node ./dist/index.js\""
+
+  "engines": {
+    "node": ">=18"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+
+  "scripts": {
+    "dev": "tsc-watch --onSuccess \"node ./dist/index.js\"",
+    "build": "tsc",
+    "start": "node ./dist/index.js",
+    "clean": "rimraf dist",
+    "prebuild": "npm run clean"
+  },
+
   "dependencies": {
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
@@ -19,14 +26,13 @@
     "express": "^5.2.1",
     "ioredis": "^5.10.1",
     "jsonwebtoken": "^9.0.3",
-    "lucide-react": "^1.14.0",
     "pg": "^8.20.0",
-    "recharts": "^3.8.1",
     "resend": "^6.9.4",
     "socket.io": "^4.8.3",
     "uuid": "^13.0.0",
     "zod": "^4.3.6"
   },
+
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
     "@types/cookie-parser": "^1.4.10",
@@ -36,6 +42,7 @@
     "@types/node": "^25.5.0",
     "@types/pg": "^8.20.0",
     "drizzle-kit": "^0.31.10",
+    "rimraf": "^6.0.0",
     "tsc-watch": "^7.2.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
