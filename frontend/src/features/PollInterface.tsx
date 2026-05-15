@@ -52,6 +52,7 @@ export default function PollInterface() {
   const { pollId } = useParams({
     from: '/polls/$pollId',
   })
+  const isInitialized = useUserInfoStore((state) => state.isInitialized)
   const router = useRouter()
   const navigate = useNavigate()
   const [poll, setPoll] = useState<PollData | null>(null)
@@ -64,40 +65,29 @@ export default function PollInterface() {
   const [isSaving, setIsSaving] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   useEffect(() => {
+    if (!isInitialized) return 
+
     let ignore = false
     async function getPollData() {
       try {
-        socket.connect();
-        socket.emit(`join_poll`, pollId)
-        socket.emit('new_view', pollId)
         const [pollRes, votedRes, savedRes] = await Promise.all([
           api.get(`/poll/interface/${pollId}`),
           api.get(`/poll/is-already-voted/${pollId}`),
           api.get(`/poll/isSaved/${pollId}`),
           api.post(`/poll/viwe-poll/${pollId}`),
         ])
-        
         if (ignore) return
-
         setPoll(pollRes.data.data)
-
         setAlreadyVoted(votedRes.data.data.alreadyVoted)
-
         setIsSaved(savedRes.data.data.isSaved)
-        
       } catch (error) {
         console.error(error)
       }
     }
 
     getPollData()
-
-    return () => {
-      socket.emit(`leave_poll`, pollId);
-      socket.disconnect();
-      ignore = true
-    }
-  }, [pollId])
+    return () => { ignore = true }
+  }, [pollId, isInitialized])
 
   const sorted = useMemo(() => {
     if (!poll?.questions) return []

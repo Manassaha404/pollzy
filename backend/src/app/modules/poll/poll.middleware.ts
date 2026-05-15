@@ -33,20 +33,16 @@ export const isAuthorizationRequired: RequestHandler = asyncHandler(
       throw ApiError.notFound('poll not found')
     }
 
-    // private poll -> auth required
     if (!poll.isPublic) {
       return authorization(req, res, next)
     }
 
-    // public poll
     const token = extractOptionalBearerToken(req)
 
-    // if token exists -> attach user
     if (token) {
       return authorization(req, res, next)
     }
 
-    // guest access allowed
     next()
   },
 )
