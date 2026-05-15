@@ -23,5 +23,7 @@ pollRouter.post("/submit-vote/:pollId", isAuthorizationRequired, validate(submit
 pollRouter.post("/viwe-poll/:pollId", isAuthorizationRequired, pollController.viewPoll)
 pollRouter.get("/is-already-voted/:pollId", isAuthorizationRequired, pollController.alreadyVoted)
 pollRouter.post("/save-poll/:pollId", authorization, pollController.savePoll);
-pollRouter.get("/isSaved/:pollId",optionalAuthorization, pollController.isPollSaved)
+pollRouter.get("/isSaved/:pollId",optionalAuthorization, pollController.isPollSaved);
+pollRouter.get("/saved", authorization, pollController.savedPolls);
+pollRouter.get('/public', pollController.publicPolls)
 export default pollRouter;

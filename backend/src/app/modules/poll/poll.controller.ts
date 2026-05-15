@@ -572,5 +572,49 @@ class pollController {
       }
     },
   );
+  static savedPolls: RequestHandler = asyncHandler(
+    async (req: Request, res: Response) => {
+      const { userId } = (req as any).userId;
+
+      if (!userId) {
+        throw ApiError.unAuthorized();
+      }
+      const savedPolls = await db
+        .select()
+        .from(saves)
+        .innerJoin(polls, eq(saves.pollId, polls.id))
+        .where(eq(saves.userId, userId));
+      const pollData = savedPolls.map((p) => p.polls);
+      return ApiResponse(res, 200, "poll saved data fetch successfully", {
+        polls: pollData,
+      });
+    },
+  );
+
+  static publicPolls: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const page  = parseInt(req.query.page  as string) || 1
+    const limit = parseInt(req.query.limit as string) || 10
+    const offset = (page - 1) * limit
+
+    const publicPolls = await db
+      .select()
+      .from(polls)
+      .where(
+        and(
+          eq(polls.isPublic, true),
+          eq(polls.status, 'active'),
+        )
+      )
+      .orderBy(desc(polls.createdAt))
+      .limit(limit)
+      .offset(offset)
+
+    return ApiResponse(res, 200, 'Public polls fetched successfully', {
+      polls: publicPolls,
+    })
+  },
+)
+
 }
 export default pollController;

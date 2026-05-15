@@ -1,6 +1,4 @@
-// PollResultsPage.tsx
-
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { useParams } from '@tanstack/react-router'
 
@@ -155,32 +153,7 @@ export default function PollResultsPage() {
     }
   }, [pollId])
 
-  const analytics = useMemo(() => {
-    const mostVotedOptionPerQuestion = questionData.map((question) => {
-      const topOption = question.options.reduce((max, option) =>
-        option.votes > max.votes ? option : max,
-      )
-
-      return {
-        questionId: question.id,
-        questionText: question.text,
-        topOption,
-      }
-    })
-
-    const totalQuestionVotes = questionData.map((question) => ({
-      questionId: question.id,
-      totalVotes: question.options.reduce(
-        (acc, curr) => acc + curr.votes,
-        0,
-      ),
-    }))
-
-    return {
-      mostVotedOptionPerQuestion,
-      totalQuestionVotes,
-    }
-  }, [questionData])
+  
 
 
 

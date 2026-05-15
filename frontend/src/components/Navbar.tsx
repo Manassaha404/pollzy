@@ -18,8 +18,8 @@ import VerticalLogo from './VerticalLogo'
 import { useLogout } from '#/hooks/useLogout'
 
 const NAV_LINKS = [
-  { label: 'View public polls', icon: LayoutGrid, to: '/' },
-  { label: 'Saved', icon: Bookmark, to: '/saved' },
+  { label: 'View public polls', icon: LayoutGrid, to: '/polls/public' },
+  { label: 'Saved', icon: Bookmark, to: '/polls/savedPolls' },
 ]
 
 export const Navbar = () => {

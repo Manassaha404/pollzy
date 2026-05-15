@@ -10,6 +10,10 @@ const envSchema = z.object({
   RESEND_API_KEY: z.string(),
   VERIFICATION_TOKEN_SERECT: z.string(),
   VERIFICATION_TOKEN_EXPIRY: z.string(),
+  REDIS_HOST:z.string(),
+  REDIS_PORT:z.string(),
+  REDIS_USERNAME:z.string(),
+  REDIS_PASSWORD:z.string(),
 });
 
 const parsed = envSchema.safeParse(process.env);

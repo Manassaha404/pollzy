@@ -1,7 +1,7 @@
-import { io } from "socket.io-client";
+import { io } from 'socket.io-client'
+const socketUrl = import.meta.env.VITE_SOCKET_URL
+const socket = io(socketUrl, {
+  autoConnect: false,
+})
 
-const socket = io(`http://localhost:8080`,{
-    autoConnect: false
-});
-
-export default socket;
+export default socket

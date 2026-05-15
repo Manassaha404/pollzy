@@ -509,13 +509,6 @@ export default function CreateNewPollPage() {
                       'Create Poll'
                     )}
                   </Button>
-
-                  <p
-                    className="text-center text-xs"
-                    style={{ color: 'rgba(255,255,255,0.2)' }}
-                  >
-                    You can edit poll settings after creation.
-                  </p>
                 </CardContent>
               </Card>
             </div>

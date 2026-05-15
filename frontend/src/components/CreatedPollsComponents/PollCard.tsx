@@ -8,21 +8,16 @@ import { RESULT_VISIBILITY_CONFIG, STATUS_CONFIG } from '#/constants/POLL_CONSTA
 import type { Poll } from '#/types/polls'
 import { useNavigate } from '@tanstack/react-router'
 
-export function PollCard({ poll }: { poll: Poll }) {
+export function PollCard({ poll,onClickfn }: { poll: Poll, onClickfn: (poll:Poll)=>void }) {
   const status = STATUS_CONFIG[poll.status]
   const rv = RESULT_VISIBILITY_CONFIG[poll.resultVisibility]
   const RvIcon = rv.icon
   const isExpired = poll.closedAt && new Date(poll.closedAt) < new Date()
-  const navigate = useNavigate()
 
   return (
     <Card
       onClick={() => {
-        if(poll.status === 'draft'){
-          navigate({ to: `/polls/draft/${poll.id}` })
-        }else{
-          navigate({to: `/polls/dashboard/${poll.id}`})
-        }
+        onClickfn(poll);
       }}
       className="border shadow-none rounded-2xl transition-all duration-200 hover:border-white/12 group cursor-pointer"
       style={{

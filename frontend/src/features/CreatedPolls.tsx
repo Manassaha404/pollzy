@@ -1,12 +1,11 @@
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-
 import colors from '../constants/COLORS'
 
 import type { Filter, Poll } from '#/types/polls'
 import { useEffect, useState } from 'react'
 import api from '#/api/axios'
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { PollCard } from '#/components/CreatedPollsComponents/PollCard'
 import { PollSkeleton } from '#/components/CreatedPollsComponents/PollSkeleton'
 import { EmptyState } from '#/components/CreatedPollsComponents/EmptyState'
@@ -18,7 +17,7 @@ export default function CreatedPollsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [filter, setFilter] = useState<Filter>('all')
-
+  const navigate = useNavigate()
   async function fetchPolls() {
     setLoading(true)
     setError(false)
@@ -32,12 +31,19 @@ export default function CreatedPollsPage() {
     }
   }
 
+  function handelOnclick(poll: Poll) {
+    if (poll.status === 'draft') {
+      navigate({ to: `/polls/draft/${poll.id}` })
+    } else {
+      navigate({ to: `/polls/dashboard/${poll.id}` })
+    }
+  }
+
   useEffect(() => {
     fetchPolls()
   }, [])
 
-  const filtered =
-    filter === 'all' ? polls : polls.filter((p) => p.status === filter)
+  const filtered = filter === 'all' ? polls : polls.filter((p) => p.status === filter)
 
   const counts: Record<Filter, number> = {
     all: polls.length,
@@ -47,20 +53,12 @@ export default function CreatedPollsPage() {
   }
 
   return (
-    <div
-      className="min-h-screen text-white"
-      style={{ backgroundColor: colors.black }}
-    >
-      <div className="max-w-4xl mx-auto px-6 py-12">
-        <div className="flex items-center justify-between mb-8">
+    <div className="min-h-screen text-white" style={{ backgroundColor: colors.black }}>
+      <div className="mx-auto max-w-4xl px-6 py-12">
+        <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-white">
-              My Polls
-            </h1>
-            <p
-              className="text-sm mt-1.5"
-              style={{ color: 'rgba(255,255,255,0.3)' }}
-            >
+            <h1 className="text-3xl font-semibold tracking-tight text-white">My Polls</h1>
+            <p className="mt-1.5 text-sm" style={{ color: 'rgba(255,255,255,0.3)' }}>
               {loading
                 ? 'Loading your polls…'
                 : polls.length > 0
@@ -71,16 +69,16 @@ export default function CreatedPollsPage() {
 
           <Link to="/polls/new">
             <Button
-              className="h-10 px-4 rounded-xl text-sm font-semibold text-black transition-colors"
+              className="h-10 rounded-xl px-4 text-sm font-semibold text-black transition-colors"
               style={{ backgroundColor: colors.sage }}
             >
-              <Plus className="w-4 h-4 mr-1.5" /> New Poll
+              <Plus className="mr-1.5 h-4 w-4" /> New Poll
             </Button>
           </Link>
         </div>
 
         {!loading && !error && polls.length > 0 && (
-          <div className="flex items-center gap-2 mb-6 flex-wrap">
+          <div className="mb-6 flex flex-wrap items-center gap-2">
             {FILTERS.map(({ value, label }) => {
               const active = filter === value
               const count = counts[value]
@@ -89,20 +87,16 @@ export default function CreatedPollsPage() {
                   key={value}
                   type="button"
                   onClick={() => setFilter(value)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all"
+                  className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all"
                   style={{
-                    backgroundColor: active
-                      ? `${colors.sage}1A`
-                      : 'transparent',
-                    borderColor: active
-                      ? `${colors.sage}4D`
-                      : 'rgba(255,255,255,0.08)',
+                    backgroundColor: active ? `${colors.sage}1A` : 'transparent',
+                    borderColor: active ? `${colors.sage}4D` : 'rgba(255,255,255,0.08)',
                     color: active ? colors.sage : 'rgba(255,255,255,0.35)',
                   }}
                 >
                   {label}
                   <span
-                    className="px-1.5 py-0.5 rounded-md text-[10px] font-semibold"
+                    className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold"
                     style={{
                       backgroundColor: active
                         ? `${colors.sage}33`
@@ -131,7 +125,7 @@ export default function CreatedPollsPage() {
         ) : (
           <div className="space-y-3">
             {filtered.map((poll) => (
-              <PollCard key={poll.id} poll={poll} />
+              <PollCard key={poll.id} poll={poll} onClickfn={handelOnclick} />
             ))}
           </div>
         )}
