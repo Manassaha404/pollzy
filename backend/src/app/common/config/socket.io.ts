@@ -21,7 +21,7 @@ subscriber.on('message',(channel, message) => {
 })
 const io = new Server({
     cors:{
-        origin: '*'
+        origin: 'https://pollzy.manassaha425.workers.dev/'
     }
 });
 
