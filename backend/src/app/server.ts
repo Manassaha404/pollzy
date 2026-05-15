@@ -6,12 +6,13 @@ import authRouter from "./modules/auth/auth.routes.js";
 import { errorHandler } from "./common/middlewares/errorHandler.js";
 import { ApiError } from "./common/utils/apiError.js";
 import pollRouter from "./modules/poll/poll.routes.js";
+import { env } from "./common/config/envValidate.js";
 export function createExpressServer(): Express {
   const app = express();
 
   
   app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: env.CLIENT_URL,
   credentials: true,               
 }))
   app.use(cookieParser());

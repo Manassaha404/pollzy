@@ -1,6 +1,7 @@
 import {Server} from "socket.io"
 
 import { publisher, subscriber } from "./redis.js"
+import { env } from "./envValidate.js";
 
 await subscriber.subscribe(
   'redis:submit_vote:event',
@@ -21,7 +22,7 @@ subscriber.on('message',(channel, message) => {
 })
 const io = new Server({
     cors:{
-        origin: '*'
+        origin: env.CLIENT_URL
     }
 });
 

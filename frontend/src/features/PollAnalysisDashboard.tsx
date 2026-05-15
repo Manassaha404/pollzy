@@ -52,7 +52,7 @@ export default function PollAnalyticsPage() {
 
         setPollData({
           ...data.data.polldata,
-          shareUrl: `http://localhost:3000/polls/${pollId}`,
+          shareUrl: `${window.location.origin}/polls/${pollId}`,
         })
       } catch (error) {
         console.log(error)
