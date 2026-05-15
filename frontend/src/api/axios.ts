@@ -2,13 +2,13 @@ import axios from 'axios'
 import { useUserInfoStore } from '#/store/userInfoStore'
 const apiUrl = import.meta.env.VITE_API_URL;
 const api = axios.create({
-  baseURL: apiUrl,
+  baseURL: 'https://pollzy.onrender.com/api/v1',
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 })
 
 const refreshApi = axios.create({
-  baseURL: 'http://localhost:8080/api/v1',
+  baseURL: 'https://pollzy.onrender.com/api/v1',
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 })
