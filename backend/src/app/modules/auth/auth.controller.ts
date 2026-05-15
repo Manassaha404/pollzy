@@ -51,56 +51,63 @@ class authController {
   );
 
   static userLogin: RequestHandler = asyncHandler(
-    async (req: Request, res: Response) => {
-      const { email, password } = req.body;
+  async (req: Request, res: Response) => {
+    const { email, password } = req.body;
 
-      const [existingUser] = await db
-        .select()
-        .from(users)
-        .where(eq(users.email, email));
-      if (!existingUser) throw ApiError.badRequest("Invalid email or password");
-
-      const [userAuth] = await db
-        .select()
-        .from(auths)
-        .where(eq(auths.userId, existingUser.id));
-      if (!userAuth) {
-        throw ApiError.unAuthorized(
-          "Account is not verified. Please verify your email.",
-        );
-      }
-
-      const isPasswordCorrect = await bcrypt.compare(
-        password,
-        userAuth.password,
+    const [existingUser] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email));
+    
+    if (!existingUser) throw ApiError.badRequest("Invalid email or password");
+    const [userAuth] = await db
+      .select()
+      .from(auths)
+      .where(eq(auths.userId, existingUser.id));
+    
+    if (!userAuth) {
+      throw ApiError.unAuthorized(
+        "Account is not verified. Please verify your email.",
       );
-      if (!isPasswordCorrect)
-        throw ApiError.badRequest("Invalid email or password");
+    }
+    const isPasswordCorrect = await bcrypt.compare(
+      password,
+      userAuth.password,
+    );
+    if (!isPasswordCorrect)
+      throw ApiError.badRequest("Invalid email or password");
+    const accessToken = generateAccessToken(existingUser.id);
+    const refreshToken = generateRefreshToken(existingUser.id);
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+    await db
+      .update(auths)
+      .set({ refreshToken: hashedRefreshToken })
+      .where(eq(auths.id, userAuth.id));
 
-      const accessToken = generateAccessToken(existingUser.id);
-      const refreshToken = generateRefreshToken(existingUser.id);
-      const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+    
+    const isProd = process.env.NODE_ENV === "production";
+    const cookieOptions = {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: (isProd ? 'none' : 'lax') as 'none' | 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    };
 
-      await db
-        .update(auths)
-        .set({ refreshToken: hashedRefreshToken })
-        .where(eq(auths.id, userAuth.id));
+    // 7. Attach cookie to response
+    res.cookie("refreshToken", refreshToken, cookieOptions);
 
-      const cookieOptions = {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict" as const,
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      };
-
-      ApiResponse(
-        res.cookie("refreshToken", refreshToken, cookieOptions),
-        200,
-        "Logged in successfully",
-        { accessToken, info: { ...existingUser } },
-      );
-    },
-  );
+    // 8. Final API Response
+    return ApiResponse(
+      res,
+      200,
+      "Logged in successfully",
+      { 
+        accessToken, 
+        info: { ...existingUser } 
+      },
+    );
+  },
+);
 
   static getUserInfo: RequestHandler = asyncHandler(
     async (req: Request, res: Response) => {
@@ -172,112 +179,113 @@ class authController {
   );
 
   static resetTokens: RequestHandler = asyncHandler(
-    async (req: Request, res: Response) => {
-      const { refreshToken } = req.cookies;
+  async (req: Request, res: Response) => {
+    const { refreshToken } = req.cookies;
 
-      if (!refreshToken)
-        throw ApiError.unAuthorized("Refresh token missing in cookies");
-
-      const payload = verifyRefreshToken(refreshToken);
-      const { userId } = payload;
-
-      const [existingUser] = await db
-        .select()
-        .from(users)
-        .where(eq(users.id, userId));
-      if (!existingUser) throw ApiError.unAuthorized("User not found");
-
-      const [userAuth] = await db
-        .select()
-        .from(auths)
-        .where(eq(auths.userId, existingUser.id));
-      if (!userAuth) {
-        throw ApiError.unAuthorized("Account not verified");
-      }
-
-      if (!userAuth.refreshToken)
-        throw ApiError.unAuthorized("User is not logged in");
-
-      const isRefreshTokenMatched = await bcrypt.compare(
-        refreshToken,
-        userAuth.refreshToken,
-      );
-      if (!isRefreshTokenMatched)
-        throw ApiError.unAuthorized("Invalid refresh token");
-
-      const newRefreshToken = generateRefreshToken(existingUser.id);
-      const accessToken = generateAccessToken(existingUser.id);
-      const hashedRefreshToken = await bcrypt.hash(newRefreshToken, 10);
-
-      await db
-        .update(auths)
-        .set({ refreshToken: hashedRefreshToken })
-        .where(eq(auths.id, userAuth.id));
-      const cookieOptions = {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict" as const,
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      };
-      ApiResponse(
-        res.cookie("refreshToken", newRefreshToken, cookieOptions),
-        200,
-        "Tokens refreshed successfully",
-        {
-          accessToken,
-          info: { ...existingUser },
-        },
-      );
-    },
-  );
+    if (!refreshToken)
+      throw ApiError.unAuthorized("Refresh token missing in cookies");
+    const payload = verifyRefreshToken(refreshToken);
+    const userId = payload.userId;
+    const [existingUser] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId));
+    if (!existingUser) throw ApiError.unAuthorized("User not found");
+    const [userAuth] = await db
+      .select()
+      .from(auths)
+      .where(eq(auths.userId, existingUser.id));
+    
+    if (!userAuth || !userAuth.refreshToken) {
+      throw ApiError.unAuthorized("User is not logged in or account not verified");
+    }
+    const isRefreshTokenMatched = await bcrypt.compare(
+      refreshToken,
+      userAuth.refreshToken,
+    );
+    if (!isRefreshTokenMatched)
+      throw ApiError.unAuthorized("Invalid refresh token");
+    const newRefreshToken = generateRefreshToken(existingUser.id);
+    const accessToken = generateAccessToken(existingUser.id);
+    const hashedRefreshToken = await bcrypt.hash(newRefreshToken, 10);
+    await db
+      .update(auths)
+      .set({ refreshToken: hashedRefreshToken })
+      .where(eq(auths.id, userAuth.id));
+    const isProd = process.env.NODE_ENV === "production";
+    const cookieOptions = {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: (isProd ? 'none' : 'lax') as 'none' | 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    };
+    res.cookie("refreshToken", newRefreshToken, cookieOptions);
+    return ApiResponse(
+      res,
+      200,
+      "Tokens refreshed successfully",
+      {
+        accessToken,
+        info: { ...existingUser },
+      },
+    );
+  },
+);
 
   static logout: RequestHandler = asyncHandler(
-    async (req: Request, res: Response) => {
-      const { userId } = (req as any).userId;
+  async (req: Request, res: Response) => {
+    const userId = (req as any).userId?.userId;
+    if (!userId) throw ApiError.unAuthorized("Not authenticated");
 
-      const [existingUser] = await db
-        .select()
-        .from(users)
-        .where(eq(users.id, userId));
-      if (!existingUser) throw ApiError.notFound("User not found");
+    const [existingUser] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId));
+    if (!existingUser) throw ApiError.notFound("User not found");
 
-      const [userAuth] = await db
-        .select()
-        .from(auths)
-        .where(eq(auths.userId, existingUser.id));
-      if (!userAuth) throw ApiError.internal("Auth record missing");
-      const cookieOptions = {
-        httpOnly: true,
-        sameSite: "strict" as const,
-        secure: process.env.NODE_ENV === "production",
-      };
-      await db
-        .update(auths)
-        .set({ refreshToken: null })
-        .where(eq(auths.id, userAuth.id));
-      ApiResponse(
-        res.clearCookie("refreshToken", cookieOptions),
-        200,
-        "Logged out successfully",
-      );
-    },
-  );
+    const [userAuth] = await db
+      .select()
+      .from(auths)
+      .where(eq(auths.userId, existingUser.id));
+
+    if (!userAuth) throw ApiError.internal("Auth record missing");
+    const isProd = process.env.NODE_ENV === "production";
+    const cookieOptions = {
+      httpOnly: true,
+      sameSite: (isProd ? 'none' : 'lax') as 'none' | 'lax',
+      secure: isProd,
+    };
+    await db
+      .update(auths)
+      .set({ refreshToken: null })
+      .where(eq(auths.id, userAuth.id));
+    res.clearCookie("refreshToken", cookieOptions);
+
+    return ApiResponse(
+      res,
+      200,
+      "Logged out successfully"
+    );
+  },
+);
 
   static guestToken: RequestHandler = asyncHandler(
-    async (req: Request, res: Response) => {
-      const guestToken = crypto.randomUUID();
-      const cookieOptions = {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict" as const,
-      };
-      return ApiResponse(
-        res.cookie("guestToken", guestToken, cookieOptions),
-        200,
-        "guestToken send successFully",
-      );
-    },
-  );
+  async (req: Request, res: Response) => {
+    const guestToken = crypto.randomUUID();
+    const isProduction = process.env.NODE_ENV === "production";
+    res.cookie("guestToken", guestToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax', 
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    });
+    return ApiResponse(
+      res, 
+      200, 
+      "guestToken sent successfully"
+    );
+  },
+);
 }
 
 export default authController;
