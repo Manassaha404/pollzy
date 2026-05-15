@@ -1,7 +1,6 @@
 import { createRootRoute, Outlet } from '@tanstack/react-router'
 import { Navbar } from '../components/Navbar.tsx'
-import { useRefreshToken } from '#/hooks/useRefreshToken.ts'
-import { useGuestToken } from '../hooks/useGuestToken.ts'
+import { useAuthInit } from '#/hooks/useAuthInit.ts' // <-- Use the new hook
 import PageLoader from '#/components/PageLoader.tsx'
 
 export const Route = createRootRoute({
@@ -9,10 +8,7 @@ export const Route = createRootRoute({
 })
 
 function RootComponent() {
-  const refreshLoading = useRefreshToken()
-  const guestLoading = useGuestToken()
-
-  const loading = refreshLoading || guestLoading
+  const loading = useAuthInit();
 
   if (loading) return <PageLoader />
 

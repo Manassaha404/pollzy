@@ -64,16 +64,14 @@ export default function PollInterface() {
   const [isSaved, setIsSaved] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-
+  useGuestToken()
   useEffect(() => {
     let ignore = false
-
     async function getPollData() {
       try {
         socket.connect();
         socket.emit(`join_poll`, pollId)
         socket.emit('new_view', pollId)
-        useGuestToken()
         const [pollRes, votedRes, savedRes] = await Promise.all([
           api.get(`/poll/interface/${pollId}`),
           api.get(`/poll/is-already-voted/${pollId}`),

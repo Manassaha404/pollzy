@@ -205,371 +205,342 @@ class pollController {
   );
   static getDashboardPolldata: RequestHandler = asyncHandler(
     async (req: Request, res: Response) => {
-      try {
-        const { pollId } = req.params;
-        if (!pollId) {
-          throw ApiError.badRequest("pollId is missing");
-        }
-        const { userId } = (req as any).userId;
-        if (!userId) throw new Error("User ID not found in request");
-
-        const [poll] = await db
-          .select()
-          .from(polls)
-          .where(eq(polls.id, pollId as string));
-        if (!poll) {
-          throw ApiError.notFound("poll not found");
-        }
-
-        const questionWiseVoteData = await db
-          .select()
-          .from(questions)
-          .innerJoin(options, eq(options.questionId, questions.id))
-          .leftJoin(votes, eq(votes.optionId, options.id))
-          .where(eq(questions.pollId, poll.id));
-        const totalViwes = await db
-          .select({ count: count() })
-          .from(viwes)
-          .where(eq(viwes.pollId, poll.id));
-        const totalQuestions = await db
-          .select()
-          .from(questions)
-          .where(eq(questions.pollId, pollId as string));
-        const questionWiseOptionsMap = new Map<
-          string,
-          dashboardquestiondataType
-        >();
-        const optionWiseVoteCountMap = new Map<string, number>();
-        for (const vote of questionWiseVoteData) {
-          const { questions, options } = vote;
-          const voteId = vote.votes?.id;
-          const questionId = questions.id;
-          const optionId = options.id;
-          if (!questionWiseOptionsMap.has(questionId)) {
-            questionWiseOptionsMap.set(questionId, {
-              id: questionId,
-              text: questions.text,
-              isRequired: questions.isRequired,
-              options: [],
-            });
-          }
-          const question = questionWiseOptionsMap.get(questionId)!;
-          const optionExists = question.options.some((o) => o.id === optionId);
-          if (!optionExists) {
-            question.options.push({ id: optionId, text: options.text });
-          }
-          optionWiseVoteCountMap.set(
-            optionId,
-            (optionWiseVoteCountMap.get(optionId) || 0) + (voteId ? 1 : 0),
-          );
-        }
-        const totalVotes = await db
-          .selectDistinct({ userId: votes.userId })
-          .from(votes)
-          .innerJoin(options, eq(options.id, votes.optionId))
-          .innerJoin(questions, eq(questions.id, options.questionId))
-          .where(eq(questions.pollId, poll.id));
-        const questionData = [...questionWiseOptionsMap.values()].map((q) => ({
-          ...q,
-          options: q.options.map((op) => {
-            return {
-              id: op.id,
-              text: op.text,
-              votes: optionWiseVoteCountMap.get(op.id) || 0,
-            };
-          }),
-        }));
-        const polldata = {
-          ...poll,
-          totalViews: totalViwes[0]?.count || 0,
-          totalVotes: totalVotes.length,
-          totalQuestions: totalQuestions.length,
-          totalOptions: optionWiseVoteCountMap.size,
-        };
-        return ApiResponse(res, 200, "poll details fetching", {
-          polldata,
-          questionData,
-        });
-      } catch (error) {
-        throw ApiError.internal();
+      const { pollId } = req.params;
+      if (!pollId) {
+        throw ApiError.badRequest("pollId is missing");
       }
+      const { userId } = (req as any).userId;
+      if (!userId) throw new Error("User ID not found in request");
+
+      const [poll] = await db
+        .select()
+        .from(polls)
+        .where(eq(polls.id, pollId as string));
+      if (!poll) {
+        throw ApiError.notFound("poll not found");
+      }
+
+      const questionWiseVoteData = await db
+        .select()
+        .from(questions)
+        .innerJoin(options, eq(options.questionId, questions.id))
+        .leftJoin(votes, eq(votes.optionId, options.id))
+        .where(eq(questions.pollId, poll.id));
+      const totalViwes = await db
+        .select({ count: count() })
+        .from(viwes)
+        .where(eq(viwes.pollId, poll.id));
+      const totalQuestions = await db
+        .select()
+        .from(questions)
+        .where(eq(questions.pollId, pollId as string));
+      const questionWiseOptionsMap = new Map<
+        string,
+        dashboardquestiondataType
+      >();
+      const optionWiseVoteCountMap = new Map<string, number>();
+      for (const vote of questionWiseVoteData) {
+        const { questions, options } = vote;
+        const voteId = vote.votes?.id;
+        const questionId = questions.id;
+        const optionId = options.id;
+        if (!questionWiseOptionsMap.has(questionId)) {
+          questionWiseOptionsMap.set(questionId, {
+            id: questionId,
+            text: questions.text,
+            isRequired: questions.isRequired,
+            options: [],
+          });
+        }
+        const question = questionWiseOptionsMap.get(questionId)!;
+        const optionExists = question.options.some((o) => o.id === optionId);
+        if (!optionExists) {
+          question.options.push({ id: optionId, text: options.text });
+        }
+        optionWiseVoteCountMap.set(
+          optionId,
+          (optionWiseVoteCountMap.get(optionId) || 0) + (voteId ? 1 : 0),
+        );
+      }
+      const totalVotes = await db
+        .selectDistinct({ userId: votes.userId })
+        .from(votes)
+        .innerJoin(options, eq(options.id, votes.optionId))
+        .innerJoin(questions, eq(questions.id, options.questionId))
+        .where(eq(questions.pollId, poll.id));
+      const questionData = [...questionWiseOptionsMap.values()].map((q) => ({
+        ...q,
+        options: q.options.map((op) => {
+          return {
+            id: op.id,
+            text: op.text,
+            votes: optionWiseVoteCountMap.get(op.id) || 0,
+          };
+        }),
+      }));
+      const polldata = {
+        ...poll,
+        totalViews: totalViwes[0]?.count || 0,
+        totalVotes: totalVotes.length,
+        totalQuestions: totalQuestions.length,
+        totalOptions: optionWiseVoteCountMap.size,
+      };
+      return ApiResponse(res, 200, "poll details fetching", {
+        polldata,
+        questionData,
+      });
     },
   );
   static getInterfaceData: RequestHandler = asyncHandler(
     async (req: Request, res: Response) => {
-      try {
-        const { pollId } = req.params;
+      const { pollId } = req.params;
 
-        if (!pollId) {
-          throw ApiError.badRequest("pollId is missing");
-        }
-
-        const pollData = await db
-          .select()
-          .from(polls)
-          .innerJoin(questions, eq(questions.pollId, polls.id))
-          .innerJoin(options, eq(options.questionId, questions.id))
-          .leftJoin(votes, eq(votes.optionId, options.id))
-          .where(eq(polls.id, pollId as string));
-
-        if (pollData.length === 0) {
-          throw ApiError.notFound("poll not found");
-        }
-
-        const pollDataMap = new Map<string, PollData>();
-        const questionDataMap = new Map<string, PollQuestion>();
-        const optionDataMap = new Map<string, PollOption>();
-
-        for (const eachRow of pollData) {
-          const rowPollId = eachRow.polls.id;
-          const rowQuestionId = eachRow.questions.id;
-          const rowOptionId = eachRow.options.id;
-
-          let poll = pollDataMap.get(rowPollId);
-
-          if (!poll) {
-            poll = {
-              id: rowPollId,
-              title: eachRow.polls.title,
-              description: eachRow.polls.description,
-              isPublic: eachRow.polls.isPublic,
-              resultVisibility: eachRow.polls.resultVisibility,
-              questions: [],
-              isClosed: eachRow.polls.closedAt
-                ? eachRow.polls.closedAt < new Date()
-                : false,
-              closedAt: eachRow.polls.closedAt
-                ? eachRow.polls.closedAt.toISOString()
-                : null,
-              totalVotes: 0,
-            };
-
-            pollDataMap.set(rowPollId, poll);
-          }
-
-          let question = questionDataMap.get(rowQuestionId);
-
-          if (!question) {
-            question = {
-              id: rowQuestionId,
-              text: eachRow.questions.text,
-              isRequired: eachRow.questions.isRequired,
-              orderIndex: eachRow.questions.orderIndex,
-              options: [],
-            };
-
-            questionDataMap.set(rowQuestionId, question);
-
-            poll.questions.push(question);
-          }
-
-          let option = optionDataMap.get(rowOptionId);
-
-          if (!option) {
-            option = {
-              id: rowOptionId,
-              text: eachRow.options.text,
-              orderIndex: eachRow.options.orderIndex,
-              voteCount: 0,
-            };
-
-            optionDataMap.set(rowOptionId, option);
-            question.options.push(option);
-          }
-
-          if (eachRow.votes) {
-            poll.totalVotes++;
-            option.voteCount++;
-          }
-        }
-
-        const result = pollDataMap.get(pollId as string);
-
-        return ApiResponse(res, 200, "poll data fetch successfully", {
-          ...result,
-        });
-      } catch (error) {
-        throw ApiError.internal("problem to fetch polldata");
+      if (!pollId) {
+        throw ApiError.badRequest("pollId is missing");
       }
+
+      const pollData = await db
+        .select()
+        .from(polls)
+        .innerJoin(questions, eq(questions.pollId, polls.id))
+        .innerJoin(options, eq(options.questionId, questions.id))
+        .leftJoin(votes, eq(votes.optionId, options.id))
+        .where(eq(polls.id, pollId as string));
+
+      if (pollData.length === 0) {
+        throw ApiError.notFound("poll not found");
+      }
+
+      const pollDataMap = new Map<string, PollData>();
+      const questionDataMap = new Map<string, PollQuestion>();
+      const optionDataMap = new Map<string, PollOption>();
+
+      for (const eachRow of pollData) {
+        const rowPollId = eachRow.polls.id;
+        const rowQuestionId = eachRow.questions.id;
+        const rowOptionId = eachRow.options.id;
+
+        let poll = pollDataMap.get(rowPollId);
+
+        if (!poll) {
+          poll = {
+            id: rowPollId,
+            title: eachRow.polls.title,
+            description: eachRow.polls.description,
+            isPublic: eachRow.polls.isPublic,
+            resultVisibility: eachRow.polls.resultVisibility,
+            questions: [],
+            isClosed: eachRow.polls.closedAt
+              ? eachRow.polls.closedAt < new Date()
+              : false,
+            closedAt: eachRow.polls.closedAt
+              ? eachRow.polls.closedAt.toISOString()
+              : null,
+            totalVotes: 0,
+          };
+
+          pollDataMap.set(rowPollId, poll);
+        }
+
+        let question = questionDataMap.get(rowQuestionId);
+
+        if (!question) {
+          question = {
+            id: rowQuestionId,
+            text: eachRow.questions.text,
+            isRequired: eachRow.questions.isRequired,
+            orderIndex: eachRow.questions.orderIndex,
+            options: [],
+          };
+
+          questionDataMap.set(rowQuestionId, question);
+
+          poll.questions.push(question);
+        }
+
+        let option = optionDataMap.get(rowOptionId);
+
+        if (!option) {
+          option = {
+            id: rowOptionId,
+            text: eachRow.options.text,
+            orderIndex: eachRow.options.orderIndex,
+            voteCount: 0,
+          };
+
+          optionDataMap.set(rowOptionId, option);
+          question.options.push(option);
+        }
+
+        if (eachRow.votes) {
+          poll.totalVotes++;
+          option.voteCount++;
+        }
+      }
+
+      const result = pollDataMap.get(pollId as string);
+
+      return ApiResponse(res, 200, "poll data fetch successfully", {
+        ...result,
+      });
     },
   );
   static submitVote: RequestHandler = asyncHandler(
     async (req: Request, res: Response) => {
-      try {
-        const user = (req as any).userId;
-        const userId = user?.userId;
-        const { guestToken } = req.cookies;
+      const user = (req as any).userId;
+      const userId = user?.userId;
+      const { guestToken } = req.cookies;
 
-        if (!userId && !guestToken) {
-          throw ApiError.unAuthorized();
-        }
-
-        const { answers } = req.body as submiteVoteDtoType;
-        if (answers.length === 0) {
-          throw ApiError.badRequest();
-        }
-        const inserData = answers.map((a) => {
-          return {
-            questionId: a.questionId,
-            optionId: a.optionId,
-            userId: userId ? userId.toString() : null,
-            guestToken: guestToken ? guestToken.toString() : null,
-          };
-        });
-
-        const alreadyVoted = await db
-          .select()
-          .from(votes)
-          .where(
-            or(
-              and(
-                eq(votes.questionId, answers[0]?.questionId as string),
-                eq(votes.userId, userId),
-              ),
-              and(
-                eq(votes.questionId, answers[0]?.questionId as string),
-                eq(votes.guestToken, guestToken),
-              ),
-            ),
-          );
-
-        if (alreadyVoted.length > 0) {
-          throw ApiError.conflict("user already voted");
-        }
-        await db.insert(votes).values(inserData);
-
-        return ApiResponse(res, 201, "vote submited successfully");
-      } catch (error) {
-        console.log(error);
+      if (!userId && !guestToken) {
+        throw ApiError.unAuthorized();
       }
+
+      const { answers } = req.body as submiteVoteDtoType;
+      if (answers.length === 0) {
+        throw ApiError.badRequest();
+      }
+      const inserData = answers.map((a) => {
+        return {
+          questionId: a.questionId,
+          optionId: a.optionId,
+          userId: userId ? userId.toString() : null,
+          guestToken: guestToken ? guestToken.toString() : null,
+        };
+      });
+
+      const alreadyVoted = await db
+        .select()
+        .from(votes)
+        .where(
+          or(
+            and(
+              eq(votes.questionId, answers[0]?.questionId as string),
+              eq(votes.userId, userId),
+            ),
+            and(
+              eq(votes.questionId, answers[0]?.questionId as string),
+              eq(votes.guestToken, guestToken),
+            ),
+          ),
+        );
+
+      if (alreadyVoted.length > 0) {
+        throw ApiError.conflict("user already voted");
+      }
+      await db.insert(votes).values(inserData);
+      return ApiResponse(res, 201, "vote submited successfully");
     },
   );
   static viewPoll: RequestHandler = asyncHandler(
     async (req: Request, res: Response) => {
-      try {
-        const { pollId } = req.params;
+      const { pollId } = req.params;
 
-        if (!pollId) {
-          throw ApiError.badRequest("pollId is missing");
-        }
-        const user = (req as any).userId;
-        const userId = user?.userId;
-        const { guestToken } = req.cookies;
-
-        if (!userId && !guestToken) {
-          throw ApiError.unAuthorized();
-        }
-
-        await db.insert(viwes).values({
-          pollId: pollId as string,
-          userId: userId as string,
-          guestToken,
-        });
-        return ApiResponse(res, 201, "view vote successfully");
-      } catch (error) {
-        console.log(error);
+      if (!pollId) {
+        throw ApiError.badRequest("pollId is missing");
       }
+      const user = (req as any).userId;
+      const userId = user?.userId;
+      const { guestToken } = req.cookies;
+
+      if (!userId && !guestToken) {
+        throw ApiError.unAuthorized();
+      }
+
+      await db.insert(viwes).values({
+        pollId: pollId as string,
+        userId: userId as string,
+        guestToken,
+      });
+      return ApiResponse(res, 201, "view vote successfully");
     },
   );
   static alreadyVoted: RequestHandler = asyncHandler(
     async (req: Request, res: Response) => {
-      try {
-        const user = (req as any).userId;
-        const userId = user?.userId;
-        const { guestToken } = req.cookies;
-        const { pollId } = req.params;
+      const user = (req as any).userId;
+      const userId = user?.userId;
+      const { guestToken } = req.cookies;
+      const { pollId } = req.params;
 
-        if (!pollId) {
-          throw ApiError.badRequest("pollId is missing");
-        }
-        if (!userId && !guestToken) {
-          throw ApiError.unAuthorized();
-        }
-
-        const alreadyVoted = await db
-          .select()
-          .from(polls)
-          .innerJoin(questions, eq(questions.pollId, polls.id))
-          .innerJoin(
-            votes,
-            and(
-              or(eq(votes.userId, userId), eq(votes.guestToken, guestToken)),
-              eq(votes.questionId, questions.id),
-            ),
-          )
-          .where(eq(polls.id, pollId as string));
-
-        return ApiResponse(res, 201, "vote submited successfully", {
-          alreadyVoted: alreadyVoted.length > 0,
-        });
-      } catch (error) {
-        throw ApiError.internal();
+      if (!pollId) {
+        throw ApiError.badRequest("pollId is missing");
       }
+      if (!userId && !guestToken) {
+        throw ApiError.unAuthorized();
+      }
+
+      const alreadyVoted = await db
+        .select()
+        .from(polls)
+        .innerJoin(questions, eq(questions.pollId, polls.id))
+        .innerJoin(
+          votes,
+          and(
+            or(eq(votes.userId, userId), eq(votes.guestToken, guestToken)),
+            eq(votes.questionId, questions.id),
+          ),
+        )
+        .where(eq(polls.id, pollId as string));
+
+      return ApiResponse(res, 201, "vote submited successfully", {
+        alreadyVoted: alreadyVoted.length > 0,
+      });
     },
   );
   static savePoll: RequestHandler = asyncHandler(
     async (req: Request, res: Response) => {
-      try {
-        const { userId } = (req as any).userId;
-        const { pollId } = req.params;
+      const { userId } = (req as any).userId;
+      const { pollId } = req.params;
 
-        if (!pollId) {
-          throw ApiError.badRequest("pollId is missing");
-        }
+      if (!pollId) {
+        throw ApiError.badRequest("pollId is missing");
+      }
 
-        const alreadySaved = await db
-          .select()
-          .from(saves)
+      const alreadySaved = await db
+        .select()
+        .from(saves)
+        .where(
+          and(eq(saves.userId, userId), eq(saves.pollId, pollId as string)),
+        );
+      if (alreadySaved.length > 0) {
+        await db
+          .delete(saves)
           .where(
             and(eq(saves.userId, userId), eq(saves.pollId, pollId as string)),
           );
-        if (alreadySaved.length > 0) {
-          await db
-            .delete(saves)
-            .where(
-              and(eq(saves.userId, userId), eq(saves.pollId, pollId as string)),
-            );
-          return ApiResponse(res, 200, "poll unsaved sucessfully");
-        }
-        await db.insert(saves).values({
-          pollId: pollId as string,
-          userId: userId,
-        });
-        return ApiResponse(res, 200, "poll saved sucessfully");
-      } catch (error) {
-        throw ApiError.internal("problem to save the poll");
+        return ApiResponse(res, 200, "poll unsaved sucessfully");
       }
+      await db.insert(saves).values({
+        pollId: pollId as string,
+        userId: userId,
+      });
+      return ApiResponse(res, 200, "poll saved sucessfully");
     },
   );
   static isPollSaved: RequestHandler = asyncHandler(
     async (req: Request, res: Response) => {
-      try {
-        const userId = (req as any).userId;
+      const userId = (req as any).userId;
 
-        if (!userId) {
-          return ApiResponse(res, 200, "user is unauthorized", {
-            isSaved: false,
-          });
-        }
-        const { pollId } = req.params;
-
-        if (!pollId) {
-          throw ApiError.badRequest("pollId is missing");
-        }
-        const alreadySaved = await db
-          .select()
-          .from(saves)
-          .where(
-            and(eq(saves.userId, userId), eq(saves.pollId, pollId as string)),
-          )
-          .limit(1);
-
-        return ApiResponse(res, 200, "poll saved data fetch successfully", {
-          isSaved: alreadySaved.length > 0,
+      if (!userId) {
+        return ApiResponse(res, 200, "user is unauthorized", {
+          isSaved: false,
         });
-      } catch (error) {
-        throw ApiError.internal("problem to save the poll");
       }
+      const { pollId } = req.params;
+
+      if (!pollId) {
+        throw ApiError.badRequest("pollId is missing");
+      }
+      const alreadySaved = await db
+        .select()
+        .from(saves)
+        .where(
+          and(eq(saves.userId, userId), eq(saves.pollId, pollId as string)),
+        )
+        .limit(1);
+
+      return ApiResponse(res, 200, "poll saved data fetch successfully", {
+        isSaved: alreadySaved.length > 0,
+      });
     },
   );
   static savedPolls: RequestHandler = asyncHandler(
@@ -592,29 +563,23 @@ class pollController {
   );
 
   static publicPolls: RequestHandler = asyncHandler(
-  async (req: Request, res: Response) => {
-    const page  = parseInt(req.query.page  as string) || 1
-    const limit = parseInt(req.query.limit as string) || 10
-    const offset = (page - 1) * limit
+    async (req: Request, res: Response) => {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const offset = (page - 1) * limit;
 
-    const publicPolls = await db
-      .select()
-      .from(polls)
-      .where(
-        and(
-          eq(polls.isPublic, true),
-          eq(polls.status, 'active'),
-        )
-      )
-      .orderBy(desc(polls.createdAt))
-      .limit(limit)
-      .offset(offset)
+      const publicPolls = await db
+        .select()
+        .from(polls)
+        .where(and(eq(polls.isPublic, true), eq(polls.status, "active")))
+        .orderBy(desc(polls.createdAt))
+        .limit(limit)
+        .offset(offset);
 
-    return ApiResponse(res, 200, 'Public polls fetched successfully', {
-      polls: publicPolls,
-    })
-  },
-)
-
+      return ApiResponse(res, 200, "Public polls fetched successfully", {
+        polls: publicPolls,
+      });
+    },
+  );
 }
 export default pollController;
